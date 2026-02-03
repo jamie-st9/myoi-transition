@@ -11,8 +11,8 @@ export const APP_CONFIG = {
   name: 'MyOi TRANSITION',
   /** 애플리케이션 설명 */
   description: '잘못된 전환을 막는 커리어 진단 플랫폼',
-  /** Claude API 모델 버전 */
-  claudeModel: 'claude-sonnet-4-20250514',
+  /** Gemini API 모델 버전 */
+  geminiModel: 'gemini-2.0-flash',
   /** 이력서 최대 길이 (문자) */
   maxResumeLength: 5000,
   /** 이력서 최소 길이 (문자) */

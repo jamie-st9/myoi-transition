@@ -1,10 +1,10 @@
 /**
- * Claude API Route Handler
+ * Gemini API Route Handler
  * MyOi TRANSITION MVP - 진단 리포트 생성 API
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { CompleteInput } from '@/lib/types/input';
 import type {
   CompleteReport,
@@ -18,37 +18,41 @@ import { buildDecisionQuestionsPrompt } from '@/lib/prompts/decision-questions';
 import { APP_CONFIG, ERROR_MESSAGES } from '@/lib/constants/config';
 
 /**
- * Claude API 클라이언트 호출 (단일 요청)
+ * Gemini API 클라이언트 호출 (단일 요청)
  */
-async function callClaude(
-  client: Anthropic,
+async function callGemini(
+  genAI: GoogleGenerativeAI,
   system: string,
   user: string,
   signal?: AbortSignal
 ): Promise<string> {
-  const response = await client.messages.create(
-    {
-      model: APP_CONFIG.claudeModel,
-      max_tokens: 2048,
-      system: system,
-      messages: [{ role: 'user', content: user }],
-    },
-    { signal }
-  );
+  const model = genAI.getGenerativeModel({
+    model: APP_CONFIG.geminiModel,
+    systemInstruction: system,
+  });
 
-  const textBlock = response.content.find((b) => b.type === 'text');
-  if (!textBlock || textBlock.type !== 'text') {
-    throw new Error('Claude API 응답에서 텍스트를 찾을 수 없습니다.');
+  const result = await model.generateContent({
+    contents: [{ role: 'user', parts: [{ text: user }] }],
+    generationConfig: {
+      responseMimeType: 'application/json',
+      maxOutputTokens: 2048,
+    },
+  });
+
+  const responseText = result.response.text();
+
+  if (!responseText) {
+    throw new Error('Gemini API 응답에서 텍스트를 찾을 수 없습니다.');
   }
 
-  return textBlock.text;
+  return responseText;
 }
 
 /**
- * Claude API 재시도 로직 포함 호출
+ * Gemini API 재시도 로직 포함 호출
  */
-async function callClaudeWithRetry(
-  client: Anthropic,
+async function callGeminiWithRetry(
+  genAI: GoogleGenerativeAI,
   system: string,
   user: string,
   maxRetries: number = APP_CONFIG.maxRetries,
@@ -56,7 +60,7 @@ async function callClaudeWithRetry(
 ): Promise<string> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await callClaude(client, system, user, signal);
+      return await callGemini(genAI, system, user, signal);
     } catch (error) {
       // 마지막 재시도에서 실패하면 에러 발생
       if (attempt === maxRetries) throw error;
@@ -73,11 +77,11 @@ async function callClaudeWithRetry(
 }
 
 /**
- * JSON 응답 파싱 (Claude 응답에서 JSON 추출)
+ * JSON 응답 파싱 (Gemini 응답에서 JSON 추출)
  */
-function parseJsonResponse<T>(text: string, fallbackRetry?: () => Promise<string>): T {
+function parseJsonResponse<T>(text: string): T {
   try {
-    // Claude가 마크다운 코드 블록으로 감싼 경우 처리
+    // Gemini가 마크다운 코드 블록으로 감싼 경우 처리
     const jsonMatch = text.match(/```json\s*\n?([\s\S]*?)\n?```/) || text.match(/\{[\s\S]*\}/);
 
     if (!jsonMatch) {
@@ -132,9 +136,9 @@ function validateInput(input: unknown): input is CompleteInput {
 export async function POST(request: NextRequest) {
   try {
     // 1. API 키 확인
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY 환경 변수가 설정되지 않았습니다.');
+      console.error('GOOGLE_AI_API_KEY 환경 변수가 설정되지 않았습니다.');
       return NextResponse.json(
         { error: 'API 설정이 올바르지 않습니다.' },
         { status: 500 }
@@ -160,8 +164,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Anthropic 클라이언트 초기화
-    const client = new Anthropic({ apiKey });
+    // 4. Google Generative AI 클라이언트 초기화
+    const genAI = new GoogleGenerativeAI(apiKey);
 
     // 5. 타임아웃 설정
     const abortController = new AbortController();
@@ -178,24 +182,24 @@ export async function POST(request: NextRequest) {
       const incomePrompt = buildIncomeMapPrompt(input.careerSnapshot);
       const decisionPrompt = buildDecisionQuestionsPrompt(input);
 
-      // 7. Claude API 병렬 호출 (Promise.all로 동시 실행)
+      // 7. Gemini API 병렬 호출 (Promise.all로 동시 실행)
       const [realityText, incomeText, decisionText] = await Promise.all([
-        callClaudeWithRetry(
-          client,
+        callGeminiWithRetry(
+          genAI,
           realityPrompt.system,
           realityPrompt.user,
           APP_CONFIG.maxRetries,
           abortController.signal
         ),
-        callClaudeWithRetry(
-          client,
+        callGeminiWithRetry(
+          genAI,
           incomePrompt.system,
           incomePrompt.user,
           APP_CONFIG.maxRetries,
           abortController.signal
         ),
-        callClaudeWithRetry(
-          client,
+        callGeminiWithRetry(
+          genAI,
           decisionPrompt.system,
           decisionPrompt.user,
           APP_CONFIG.maxRetries,
@@ -236,28 +240,33 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('API 에러:', error);
 
-    // Anthropic API 에러 처리
-    if (error instanceof Anthropic.APIError) {
-      console.error('Anthropic API 에러:', error.status, error.message);
+    // Google API 에러 처리
+    if (error instanceof Error) {
+      const errorMessage = error.message.toLowerCase();
 
-      if (error.status === 429) {
+      // Rate limit 에러
+      if (errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
         return NextResponse.json(
           { error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' },
           { status: 429 }
         );
       }
 
-      if (error.status === 401) {
+      // 인증 에러
+      if (errorMessage.includes('api key') || errorMessage.includes('authentication')) {
         return NextResponse.json(
           { error: 'API 인증에 실패했습니다.' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json(
-        { error: ERROR_MESSAGES.API_ERROR },
-        { status: 500 }
-      );
+      // Safety filter 에러
+      if (errorMessage.includes('safety') || errorMessage.includes('blocked')) {
+        return NextResponse.json(
+          { error: '요청이 안전 필터에 의해 차단되었습니다.' },
+          { status: 400 }
+        );
+      }
     }
 
     // 네트워크 에러
