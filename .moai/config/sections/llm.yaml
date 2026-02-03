@@ -7,16 +7,12 @@ llm:
   # - claude-only: Use Claude for all phases (Opus/Sonnet based on pricing plan)
   # - mashup: Plan with Claude, Run/Sync with GLM (balanced)
   # - glm-only: Use GLM for all phases (lowest cost)
-  # - gemini: Use Gemini via OpenRouter for Run/Sync phases
   mode: claude-only
 
   # Environment variable name for GLM API key
   # User must set this in their shell profile (~/.zshrc, ~/.bashrc)
   # Matches pricing.yaml: GLM_API_KEY
   glm_env_var: GLM_API_KEY
-
-  # Environment variable name for OpenRouter API key (for Gemini)
-  openrouter_env_var: OPENROUTER_API_KEY
 
   # Auto worktree settings
   # When hybrid mode is enabled, automatically create worktree with GLM config
@@ -32,32 +28,6 @@ llm:
       haiku: "glm-4.7-flashx"
       sonnet: "glm-4.7"
       opus: "glm-4.7"
-
-  # Gemini API Configuration (via OpenRouter)
-  # Available models: google/gemini-2.0-flash-001, google/gemini-pro-1.5
-  gemini_openrouter:
-    base_url: "https://openrouter.ai/api/v1"
-    models:
-      flash: "google/gemini-2.0-flash-001"
-      pro: "google/gemini-pro-1.5"
-
-  # Gemini API Configuration (Direct Google AI Studio)
-  # Get API key from: https://aistudio.google.com
-  # Environment variable: GOOGLE_AI_API_KEY
-  gemini:
-    provider: google-ai-studio
-    base_url: "https://generativelanguage.googleapis.com/v1beta"
-    env_var: GOOGLE_AI_API_KEY
-    models:
-      # Gemini 2.0 (Latest)
-      flash_2: "gemini-2.0-flash"
-      flash_thinking: "gemini-2.0-flash-thinking-exp"
-      # Gemini 1.5
-      pro_15: "gemini-1.5-pro"
-      flash_15: "gemini-1.5-flash"
-      # Gemini 2.5 Pro (Preview - if available)
-      pro_25: "gemini-2.5-pro-preview-05-06"
-    default_model: "gemini-2.0-flash"
 
   # Routing behavior
   routing:
