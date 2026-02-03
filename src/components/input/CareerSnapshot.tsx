@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { FileUpload } from '@/components/input/FileUpload';
@@ -33,7 +33,6 @@ interface CareerSnapshotProps {
  * - 입력 완료 확인 메시지
  */
 export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapshotProps) {
-  const [errors, setErrors] = useState<string[]>([]);
   const [isConfirmed, setIsConfirmed] = useState(false);
 
   // 문자 수 계산
@@ -41,16 +40,8 @@ export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapsho
   const isValidLength = charCount >= APP_CONFIG.minResumeLength &&
                         charCount <= APP_CONFIG.maxResumeLength;
 
-  // 데이터 변경 시 유효성 검증
-  useEffect(() => {
-    const validationErrors = validateCareerSnapshot(data);
-    setErrors(validationErrors);
-
-    // 이력서 내용이 변경되면 확인 상태 초기화
-    if (data.resumeText.trim().length > 0) {
-      setIsConfirmed(false);
-    }
-  }, [data]);
+  // 유효성 검증 (useMemo로 파생 상태 계산)
+  const errors = useMemo(() => validateCareerSnapshot(data), [data]);
 
   // 다음 단계로 진행 가능 여부
   const canProceed = errors.length === 0 && isValidLength;
@@ -101,12 +92,16 @@ export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapsho
         <Textarea
           id="resume-text"
           value={data.resumeText}
-          onChange={(e) =>
+          onChange={(e) => {
             onChange({
               ...data,
               resumeText: e.target.value,
-            })
-          }
+            });
+            // 직접 입력 시 확인 상태 초기화
+            if (isConfirmed) {
+              setIsConfirmed(false);
+            }
+          }}
           placeholder="- 삼성전자 반도체사업부 15년 근무&#10;- 공장관리팀 → 품질관리 팀장&#10;- 6시그마 블랙벨트, PMP 자격증&#10;- 해외 공장 설립 프로젝트 3건 리드&#10;- 연봉 약 8,000만원"
           className="min-h-48 text-base resize-none"
           maxLength={APP_CONFIG.maxResumeLength}
