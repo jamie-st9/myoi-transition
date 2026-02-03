@@ -179,3 +179,8 @@ dist-ssr/
 .vercel/
 .netlify/
 .firebase/
+
+# MoAI session / Windows junk
+.moai/memory/last-session-state.json
+nul
+
