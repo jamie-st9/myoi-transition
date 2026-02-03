@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { FileUpload } from '@/components/input/FileUpload';
 import { validateCareerSnapshot } from '@/lib/utils/validation';
 import { APP_CONFIG } from '@/lib/constants/config';
 import type { CareerSnapshotInput } from '@/lib/types/input';
@@ -76,12 +77,31 @@ export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapsho
         <CardHeader>
           <CardTitle className="text-2xl">커리어 스냅샷</CardTitle>
           <CardDescription>
-            지금까지의 커리어를 이력서 형태로 입력해주세요.
+            이력서 파일을 첨부하거나 직접 입력해주세요.
             상세할수록 더 정확한 진단을 받을 수 있습니다.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* 파일 업로드 */}
+          <FileUpload
+            onTextExtracted={(text) => {
+              onChange({ ...data, resumeText: text });
+              setIsConfirmed(true);
+            }}
+            disabled={false}
+          />
+
+          {/* 구분선 */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-muted-foreground/25" />
+            </div>
+            <span className="relative bg-card px-4 text-sm text-muted-foreground">
+              또는 직접 입력
+            </span>
+          </div>
+
           {/* 이력서 입력 */}
           <div className="space-y-4">
             <Label htmlFor="resume-text" className="text-base font-semibold">
