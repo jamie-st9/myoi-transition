@@ -1,16 +1,17 @@
 /**
  * 진단 입력 메인 페이지
  * 3단계 입력 프로세스를 통합 관리
+ * Pencil 디자인 적용: 연한 베이지 배경, 각 Step 자체 헤더 포함
  */
 
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ProgressIndicator } from '@/components/input/ProgressIndicator';
 import { RealityCheck } from '@/components/input/RealityCheck';
 import { CareerSnapshot } from '@/components/input/CareerSnapshot';
 import { IdeaInput } from '@/components/input/IdeaInput';
+import { LoadingScreen } from '@/components/input/LoadingScreen';
 import type {
   CompleteInput,
   RealityCheckInput,
@@ -18,6 +19,9 @@ import type {
   IdeaInput as IdeaInputType,
 } from '@/lib/types/input';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '@/lib/constants/config';
+
+/** 로딩 진행 상태 타입 */
+type ProgressStatus = 'pending' | 'loading' | 'complete';
 
 /**
  * InputPage 컴포넌트
@@ -37,6 +41,17 @@ export default function InputPage() {
 
   // 로딩 상태
   const [isLoading, setIsLoading] = useState(false);
+
+  // 로딩 진행률 상태 (LoadingScreen에서 사용)
+  const [loadingProgress, setLoadingProgress] = useState<{
+    realityReport: ProgressStatus;
+    incomeMap: ProgressStatus;
+    decisionQuestions: ProgressStatus;
+  }>({
+    realityReport: 'pending',
+    incomeMap: 'pending',
+    decisionQuestions: 'pending',
+  });
 
   // 에러 상태
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +119,13 @@ export default function InputPage() {
     setIsLoading(true);
     setError(null);
 
+    // 로딩 진행률 초기화
+    setLoadingProgress({
+      realityReport: 'loading',
+      incomeMap: 'pending',
+      decisionQuestions: 'pending',
+    });
+
     try {
       // API 호출하여 리포트 생성
       const response = await fetch(API_ENDPOINTS.COMPLETE_REPORT, {
@@ -114,6 +136,13 @@ export default function InputPage() {
         body: JSON.stringify(formData),
       });
 
+      // 진행률 업데이트: 현실 점검 리포트 완료, 수익화 지도 시작
+      setLoadingProgress({
+        realityReport: 'complete',
+        incomeMap: 'loading',
+        decisionQuestions: 'pending',
+      });
+
       if (!response.ok) {
         // HTTP 에러 처리
         const errorData = await response.json().catch(() => ({}));
@@ -122,6 +151,26 @@ export default function InputPage() {
 
       // 응답 데이터 파싱
       const reportData = await response.json();
+
+      // 진행률 업데이트: 수익화 지도 완료, 결정 질문 시작
+      setLoadingProgress({
+        realityReport: 'complete',
+        incomeMap: 'complete',
+        decisionQuestions: 'loading',
+      });
+
+      // 짧은 지연 후 완료 상태로 전환 (시각적 피드백)
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 진행률 업데이트: 모든 단계 완료
+      setLoadingProgress({
+        realityReport: 'complete',
+        incomeMap: 'complete',
+        decisionQuestions: 'complete',
+      });
+
+      // 완료 애니메이션을 위한 짧은 지연
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // sessionStorage에 리포트 데이터 저장
       sessionStorage.setItem('myoi-report-data', JSON.stringify(reportData));
@@ -137,71 +186,64 @@ export default function InputPage() {
       } else {
         setError(ERROR_MESSAGES.UNKNOWN_ERROR);
       }
+
+      // 로딩 진행률 초기화
+      setLoadingProgress({
+        realityReport: 'pending',
+        incomeMap: 'pending',
+        decisionQuestions: 'pending',
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
+  // 로딩 중일 때 LoadingScreen 표시
+  if (isLoading) {
+    return <LoadingScreen progress={loadingProgress} />;
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-xl font-bold text-center sm:text-2xl">
-            MyOi TRANSITION
-          </h1>
-          <p className="text-sm text-muted-foreground text-center mt-1">
-            잘못된 전환을 막는 커리어 진단
-          </p>
-        </div>
-      </header>
-
-      {/* 메인 컨텐츠 */}
-      <main className="container mx-auto px-4 py-8 sm:py-12">
-        {/* 진행 상황 표시 */}
-        <div className="mb-8 sm:mb-12">
-          <ProgressIndicator currentStep={currentStep} />
-        </div>
-
+    <div className="min-h-screen bg-[#FAF8F5]">
+      {/* 메인 컨텐츠 - 각 Step 컴포넌트가 자체 헤더를 포함 */}
+      <main className="container mx-auto px-4 py-6">
         {/* 단계별 컴포넌트 렌더링 */}
-        <div className="mb-8">
-          {currentStep === 1 && (
-            <RealityCheck
-              data={formData.realityCheck}
-              onChange={handleRealityCheckChange}
-              onNext={handleNext}
-            />
-          )}
+        {currentStep === 1 && (
+          <RealityCheck
+            data={formData.realityCheck}
+            onChange={handleRealityCheckChange}
+            onNext={handleNext}
+          />
+        )}
 
-          {currentStep === 2 && (
-            <CareerSnapshot
-              data={formData.careerSnapshot}
-              onChange={handleCareerSnapshotChange}
-              onNext={handleNext}
-              onBack={handleBack}
-            />
-          )}
+        {currentStep === 2 && (
+          <CareerSnapshot
+            data={formData.careerSnapshot}
+            onChange={handleCareerSnapshotChange}
+            onNext={handleNext}
+            onBack={handleBack}
+          />
+        )}
 
-          {currentStep === 3 && (
-            <IdeaInput
-              data={formData.idea}
-              onChange={handleIdeaChange}
-              onSubmit={handleSubmit}
-              onBack={handleBack}
-              isLoading={isLoading}
-            />
-          )}
-        </div>
+        {currentStep === 3 && (
+          <IdeaInput
+            data={formData.idea}
+            onChange={handleIdeaChange}
+            onSubmit={handleSubmit}
+            onBack={handleBack}
+            isLoading={isLoading}
+          />
+        )}
 
         {/* 에러 메시지 표시 */}
         {error && (
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              <h3 className="font-semibold text-destructive mb-2">오류가 발생했습니다</h3>
-              <p className="text-sm text-destructive/90">{error}</p>
+          <div className="max-w-2xl mx-auto mt-6">
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+              <h3 className="font-semibold text-red-700 mb-2">오류가 발생했습니다</h3>
+              <p className="text-sm text-red-600">{error}</p>
               <button
                 onClick={() => setError(null)}
-                className="mt-3 text-sm text-destructive underline hover:no-underline"
+                className="mt-3 text-sm text-red-700 underline hover:no-underline"
               >
                 닫기
               </button>
@@ -209,15 +251,6 @@ export default function InputPage() {
           </div>
         )}
       </main>
-
-      {/* 푸터 */}
-      <footer className="border-t mt-auto">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-xs text-muted-foreground text-center">
-            © 2024 MyOi TRANSITION. All rights reserved.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

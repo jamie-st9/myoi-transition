@@ -1,19 +1,25 @@
 /**
  * 현실 점검 입력 컴포넌트 (1단계)
  * 사용자의 시간/예산/실패 허용도 등 현실적 제약 조건 수집
+ *
+ * Pencil 디자인 적용:
+ * - 카드 없이 직접 폼 표시
+ * - 연한 베이지 배경 (#FAF8F5)
+ * - 선택된 옵션 파란 테두리 (#2563EB)
+ * - 실패 허용 정도 버튼 그룹 (가로 배치)
  */
 
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
+import { ChevronLeft } from 'lucide-react';
 import { validateRealityCheck } from '@/lib/utils/validation';
 import { REALITY_CHECK_OPTIONS } from '@/lib/constants/config';
 import type { RealityCheckInput } from '@/lib/types/input';
+import { cn } from '@/lib/utils';
 
 interface RealityCheckProps {
   /** 현재 입력 데이터 */
@@ -22,6 +28,8 @@ interface RealityCheckProps {
   onChange: (data: RealityCheckInput) => void;
   /** 다음 단계로 진행 핸들러 */
   onNext: () => void;
+  /** 뒤로가기 핸들러 (선택사항) */
+  onBack?: () => void;
 }
 
 /**
@@ -30,15 +38,16 @@ interface RealityCheckProps {
  * 사용자의 현실적 제약 조건을 수집합니다:
  * - 주당 투입 가능 시간
  * - 예산 한도
- * - 실패 감내 수준
- * - 절대적 제약 조건
+ * - 실패 허용 정도
  */
-export function RealityCheck({ data, onChange, onNext }: RealityCheckProps) {
+export function RealityCheck({ data, onChange, onNext, onBack }: RealityCheckProps) {
   const [errors, setErrors] = useState<string[]>([]);
 
-  // 데이터 변경 시 유효성 검증
+  // 데이터 변경 시 유효성 검증 (absoluteConstraints 제외)
   useEffect(() => {
-    const validationErrors = validateRealityCheck(data);
+    const validationErrors = validateRealityCheck(data).filter(
+      (error) => !error.includes('절대적 제약')
+    );
     setErrors(validationErrors);
   }, [data]);
 
@@ -55,166 +64,185 @@ export function RealityCheck({ data, onChange, onNext }: RealityCheckProps) {
     }
   };
 
+  // 실패 허용 정도 버튼 클릭 핸들러
+  const handleFailureToleranceChange = (value: RealityCheckInput['failureTolerance']) => {
+    onChange({
+      ...data,
+      failureTolerance: value,
+    });
+  };
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">현실 점검</CardTitle>
-          <CardDescription>
-            커리어 전환을 위한 현실적인 제약 조건을 확인합니다.
-            솔직하게 답변할수록 더 정확한 진단을 받을 수 있습니다.
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-[#FAF8F5]">
+      {/* 헤더 */}
+      <header className="sticky top-0 z-10 bg-[#FAF8F5] border-b border-gray-200">
+        <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
+          <button
+            onClick={onBack}
+            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="뒤로가기"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-700" />
+          </button>
+          <h1 className="text-lg font-semibold text-gray-900">현실 점검</h1>
+          <span className="text-sm text-gray-500 min-w-[40px] text-right">1/3</span>
+        </div>
+      </header>
 
-        <CardContent className="space-y-8">
-          {/* 주당 투입 시간 */}
-          <div className="space-y-4">
-            <Label htmlFor="weekly-hours" className="text-base font-semibold">
-              주당 투입 가능 시간
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              커리어 전환 준비를 위해 일주일에 투입할 수 있는 시간은 얼마나 되시나요?
-            </p>
-            <RadioGroup
-              id="weekly-hours"
-              value={data.weeklyHours}
-              onValueChange={(value) =>
-                onChange({
-                  ...data,
-                  weeklyHours: value as RealityCheckInput['weeklyHours'],
-                })
-              }
-            >
-              {REALITY_CHECK_OPTIONS.weeklyHours.map((option) => (
-                <div key={option} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent/50 transition-colors">
-                  <RadioGroupItem value={option} id={`weekly-${option}`} />
-                  <Label
-                    htmlFor={`weekly-${option}`}
-                    className="flex-1 cursor-pointer font-normal text-base"
-                  >
-                    {option}
-                  </Label>
+      {/* 폼 컨텐츠 */}
+      <main className="px-4 py-6 max-w-2xl mx-auto space-y-8">
+        {/* 주당 투입 시간 */}
+        <div className="space-y-3">
+          <Label htmlFor="weekly-hours" className="text-base font-medium text-gray-900">
+            주당 투입 가능 시간
+          </Label>
+          <RadioGroup
+            id="weekly-hours"
+            value={data.weeklyHours}
+            onValueChange={(value) =>
+              onChange({
+                ...data,
+                weeklyHours: value as RealityCheckInput['weeklyHours'],
+              })
+            }
+            className="space-y-2"
+          >
+            {REALITY_CHECK_OPTIONS.weeklyHours.map((option) => (
+              <label
+                key={option}
+                htmlFor={`weekly-${option}`}
+                className={cn(
+                  'flex items-center gap-3 p-4 rounded-xl bg-white border-2 cursor-pointer transition-all',
+                  data.weeklyHours === option
+                    ? 'border-[#2563EB] bg-blue-50/30'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <RadioGroupItem
+                  value={option}
+                  id={`weekly-${option}`}
+                  className="sr-only"
+                />
+                <div
+                  className={cn(
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                    data.weeklyHours === option
+                      ? 'border-[#2563EB] bg-[#2563EB]'
+                      : 'border-gray-300'
+                  )}
+                >
+                  {data.weeklyHours === option && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  )}
                 </div>
-              ))}
-            </RadioGroup>
-          </div>
+                <span className="text-base text-gray-900">{option}</span>
+              </label>
+            ))}
+          </RadioGroup>
+        </div>
 
-          {/* 예산 한도 */}
-          <div className="space-y-4">
-            <Label htmlFor="budget-limit" className="text-base font-semibold">
-              예산 한도
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              커리어 전환을 위해 투자할 수 있는 예산 규모는 얼마나 되시나요?
-              (교육비, 자격증, 장비 구입 등)
-            </p>
-            <RadioGroup
-              id="budget-limit"
-              value={data.budgetLimit}
-              onValueChange={(value) =>
-                onChange({
-                  ...data,
-                  budgetLimit: value as RealityCheckInput['budgetLimit'],
-                })
-              }
-            >
-              {REALITY_CHECK_OPTIONS.budgetLimit.map((option) => (
-                <div key={option} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent/50 transition-colors">
-                  <RadioGroupItem value={option} id={`budget-${option}`} />
-                  <Label
-                    htmlFor={`budget-${option}`}
-                    className="flex-1 cursor-pointer font-normal text-base"
-                  >
-                    {option}
-                  </Label>
+        {/* 예산 한도 */}
+        <div className="space-y-3">
+          <Label htmlFor="budget-limit" className="text-base font-medium text-gray-900">
+            예산 한도
+          </Label>
+          <RadioGroup
+            id="budget-limit"
+            value={data.budgetLimit}
+            onValueChange={(value) =>
+              onChange({
+                ...data,
+                budgetLimit: value as RealityCheckInput['budgetLimit'],
+              })
+            }
+            className="space-y-2"
+          >
+            {REALITY_CHECK_OPTIONS.budgetLimit.map((option) => (
+              <label
+                key={option}
+                htmlFor={`budget-${option}`}
+                className={cn(
+                  'flex items-center gap-3 p-4 rounded-xl bg-white border-2 cursor-pointer transition-all',
+                  data.budgetLimit === option
+                    ? 'border-[#2563EB] bg-blue-50/30'
+                    : 'border-gray-200 hover:border-gray-300'
+                )}
+              >
+                <RadioGroupItem
+                  value={option}
+                  id={`budget-${option}`}
+                  className="sr-only"
+                />
+                <div
+                  className={cn(
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
+                    data.budgetLimit === option
+                      ? 'border-[#2563EB] bg-[#2563EB]'
+                      : 'border-gray-300'
+                  )}
+                >
+                  {data.budgetLimit === option && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  )}
                 </div>
-              ))}
-            </RadioGroup>
-          </div>
+                <span className="text-base text-gray-900">{option}</span>
+              </label>
+            ))}
+          </RadioGroup>
+        </div>
 
-          {/* 실패 감내 수준 */}
-          <div className="space-y-4">
-            <Label htmlFor="failure-tolerance" className="text-base font-semibold">
-              실패 감내 수준
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              커리어 전환이 실패했을 때 감내할 수 있는 수준은 어느 정도인가요?
-            </p>
-            <RadioGroup
-              id="failure-tolerance"
-              value={data.failureTolerance}
-              onValueChange={(value) =>
-                onChange({
-                  ...data,
-                  failureTolerance: value as RealityCheckInput['failureTolerance'],
-                })
-              }
-            >
-              {REALITY_CHECK_OPTIONS.failureTolerance.map((option) => (
-                <div key={option} className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent/50 transition-colors">
-                  <RadioGroupItem value={option} id={`failure-${option}`} />
-                  <Label
-                    htmlFor={`failure-${option}`}
-                    className="flex-1 cursor-pointer font-normal text-base"
-                  >
-                    {option}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+        {/* 실패 허용 정도 - 버튼 그룹 */}
+        <div className="space-y-3">
+          <Label className="text-base font-medium text-gray-900">
+            실패 허용 정도
+          </Label>
+          <div className="grid grid-cols-3 gap-2">
+            {REALITY_CHECK_OPTIONS.failureTolerance.map((option) => (
+              <Button
+                key={option}
+                type="button"
+                variant={data.failureTolerance === option ? 'default' : 'outline'}
+                onClick={() => handleFailureToleranceChange(option)}
+                className={cn(
+                  'h-12 text-base font-medium rounded-xl transition-all',
+                  data.failureTolerance === option
+                    ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white border-[#2563EB]'
+                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                )}
+              >
+                {option}
+              </Button>
+            ))}
           </div>
+        </div>
 
-          {/* 절대적 제약 조건 */}
-          <div className="space-y-4">
-            <Label htmlFor="absolute-constraints" className="text-base font-semibold">
-              절대적 제약 조건 (선택사항)
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              반드시 지켜야 하는 제약 조건이 있다면 입력해주세요.
-              예: 주말 근무 불가, 대출 상환 중, 가족 돌봄 필요 등
-            </p>
-            <Textarea
-              id="absolute-constraints"
-              value={data.absoluteConstraints}
-              onChange={(e) =>
-                onChange({
-                  ...data,
-                  absoluteConstraints: e.target.value,
-                })
-              }
-              placeholder="예: 주말 근무 불가, 대출 상환 중..."
-              className="min-h-32 text-base"
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {data.absoluteConstraints.length}/500
-            </p>
+        {/* 에러 메시지 표시 */}
+        {errors.length > 0 && (
+          <div className="space-y-2 p-4 rounded-xl bg-red-50 border border-red-200">
+            {errors.map((error, index) => (
+              <p key={index} className="text-sm text-red-600">
+                {error}
+              </p>
+            ))}
           </div>
+        )}
 
-          {/* 에러 메시지 표시 */}
-          {errors.length > 0 && (
-            <div className="space-y-2 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              {errors.map((error, index) => (
-                <p key={index} className="text-sm text-destructive">
-                  • {error}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* 다음 버튼 */}
-          <div className="flex justify-end pt-4">
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed}
-              size="lg"
-              className="min-w-32"
-            >
-              다음
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* 다음 단계 버튼 */}
+        <div className="pt-4">
+          <Button
+            onClick={handleNext}
+            disabled={!canProceed}
+            className={cn(
+              'w-full h-14 text-lg font-semibold rounded-xl transition-all',
+              canProceed
+                ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            )}
+          >
+            다음 단계
+          </Button>
+        </div>
+      </main>
     </div>
   );
 }

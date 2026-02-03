@@ -6,9 +6,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { FileUpload } from '@/components/input/FileUpload';
 import { validateCareerSnapshot } from '@/lib/utils/validation';
@@ -57,13 +55,6 @@ export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapsho
   // 다음 단계로 진행 가능 여부
   const canProceed = errors.length === 0 && isValidLength;
 
-  // 이력서 분석 (MVP에서는 간단한 확인만 수행)
-  const handleAnalyze = () => {
-    if (isValidLength) {
-      setIsConfirmed(true);
-    }
-  };
-
   // 다음 버튼 클릭 핸들러
   const handleNext = () => {
     if (canProceed) {
@@ -73,152 +64,125 @@ export function CareerSnapshot({ data, onChange, onNext, onBack }: CareerSnapsho
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">커리어 스냅샷</CardTitle>
-          <CardDescription>
-            이력서 파일을 첨부하거나 직접 입력해주세요.
-            상세할수록 더 정확한 진단을 받을 수 있습니다.
-          </CardDescription>
-        </CardHeader>
+      {/* 섹션 헤더 */}
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold text-foreground">
+          이력서 파일 첨부 또는 직접 입력
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          PDF/DOCX 파일을 업로드하거나 직접 입력해주세요.
+        </p>
+      </div>
 
-        <CardContent className="space-y-6">
-          {/* 파일 업로드 */}
-          <FileUpload
-            onTextExtracted={(text) => {
-              onChange({ ...data, resumeText: text });
-              setIsConfirmed(true);
-            }}
-            disabled={false}
-          />
+      {/* 파일 업로드 */}
+      <FileUpload
+        onTextExtracted={(text) => {
+          onChange({ ...data, resumeText: text });
+          setIsConfirmed(true);
+        }}
+        disabled={false}
+      />
 
-          {/* 구분선 */}
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-muted-foreground/25" />
-            </div>
-            <span className="relative bg-card px-4 text-sm text-muted-foreground">
-              또는 직접 입력
-            </span>
-          </div>
+      {/* 구분선 */}
+      <div className="relative flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-muted-foreground/25" />
+        </div>
+        <span className="relative bg-background px-4 text-sm text-muted-foreground">
+          또는 직접 입력
+        </span>
+      </div>
 
-          {/* 이력서 입력 */}
-          <div className="space-y-4">
-            <Label htmlFor="resume-text" className="text-base font-semibold">
-              이력서
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              경력, 학력, 보유 기술, 주요 업무 등을 자유롭게 작성해주세요.
-              기존 이력서를 복사하여 붙여넣기 하셔도 좋습니다.
+      {/* 직접 입력 영역 */}
+      <div className="space-y-3">
+        {/* 예시 레이블 */}
+        <p className="text-sm text-muted-foreground">예시:</p>
+
+        <Textarea
+          id="resume-text"
+          value={data.resumeText}
+          onChange={(e) =>
+            onChange({
+              ...data,
+              resumeText: e.target.value,
+            })
+          }
+          placeholder="- 삼성전자 반도체사업부 15년 근무&#10;- 공장관리팀 → 품질관리 팀장&#10;- 6시그마 블랙벨트, PMP 자격증&#10;- 해외 공장 설립 프로젝트 3건 리드&#10;- 연봉 약 8,000만원"
+          className="min-h-48 text-base resize-none"
+          maxLength={APP_CONFIG.maxResumeLength}
+          aria-label="이력서 내용"
+          aria-describedby="resume-help resume-counter"
+        />
+
+        {/* 도움말 및 문자 수 표시 */}
+        <div className="flex items-center justify-between text-sm">
+          <span
+            id="resume-help"
+            className={`${
+              charCount < APP_CONFIG.minResumeLength && charCount > 0
+                ? 'text-destructive'
+                : 'text-muted-foreground'
+            }`}
+          >
+            최소 {APP_CONFIG.minResumeLength}자 이상 입력해주세요.
+          </span>
+          <span
+            id="resume-counter"
+            className={`${
+              charCount > APP_CONFIG.maxResumeLength
+                ? 'text-destructive'
+                : isValidLength
+                ? 'text-green-600'
+                : 'text-muted-foreground'
+            }`}
+          >
+            {charCount.toLocaleString()} / {APP_CONFIG.maxResumeLength.toLocaleString()}자
+          </span>
+        </div>
+      </div>
+
+      {/* 확인 메시지 */}
+      {isConfirmed && isValidLength && (
+        <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+          <p className="text-sm text-green-800 dark:text-green-200 font-medium">
+            이력서가 입력되었습니다. ({charCount.toLocaleString()}자)
+          </p>
+        </div>
+      )}
+
+      {/* 에러 메시지 표시 */}
+      {errors.length > 0 && (
+        <div className="space-y-2 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+          {errors.map((error, index) => (
+            <p key={index} className="text-sm text-destructive">
+              {error}
             </p>
-            <Textarea
-              id="resume-text"
-              value={data.resumeText}
-              onChange={(e) =>
-                onChange({
-                  ...data,
-                  resumeText: e.target.value,
-                })
-              }
-              placeholder="예시:&#10;&#10;[경력]&#10;- 2018-2023: ABC 회사 마케팅팀 과장&#10;- SNS 마케팅 캠페인 기획 및 실행&#10;- 월평균 100건 이상의 콘텐츠 제작&#10;&#10;[보유 기술]&#10;- 포토샵, 일러스트레이터&#10;- 구글 애널리틱스&#10;- 페이스북/인스타그램 광고 운영&#10;&#10;[학력]&#10;- 2014: OO대학교 경영학과 졸업"
-              className="min-h-80 text-base font-mono"
-              maxLength={APP_CONFIG.maxResumeLength}
-            />
+          ))}
+        </div>
+      )}
 
-            {/* 문자 수 표시 */}
-            <div className="flex items-center justify-between text-sm">
-              <span className={`${
-                charCount < APP_CONFIG.minResumeLength
-                  ? 'text-destructive'
-                  : 'text-muted-foreground'
-              }`}>
-                {charCount < APP_CONFIG.minResumeLength &&
-                  `최소 ${APP_CONFIG.minResumeLength}자 이상 입력해주세요`}
-              </span>
-              <span className={`${
-                charCount > APP_CONFIG.maxResumeLength
-                  ? 'text-destructive'
-                  : isValidLength
-                  ? 'text-green-600'
-                  : 'text-muted-foreground'
-              }`}>
-                {charCount.toLocaleString()}/{APP_CONFIG.maxResumeLength.toLocaleString()}
-              </span>
-            </div>
-          </div>
+      {/* 버튼 그룹 */}
+      <div className="flex flex-col gap-3 pt-4">
+        {/* 다음 단계 버튼 */}
+        <Button
+          onClick={handleNext}
+          disabled={!canProceed}
+          size="lg"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          다음 단계
+        </Button>
 
-          {/* 확인 메시지 */}
-          {isConfirmed && isValidLength && (
-            <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-              <p className="text-sm text-green-800 dark:text-green-200 font-medium">
-                ✓ 이력서가 입력되었습니다. ({charCount.toLocaleString()}자)
-              </p>
-              <p className="text-xs text-green-700 dark:text-green-300 mt-1">
-                실제 분석은 진단 시작 시 수행됩니다.
-              </p>
-            </div>
-          )}
-
-          {/* 에러 메시지 표시 */}
-          {errors.length > 0 && (
-            <div className="space-y-2 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-              {errors.map((error, index) => (
-                <p key={index} className="text-sm text-destructive">
-                  • {error}
-                </p>
-              ))}
-            </div>
-          )}
-
-          {/* 버튼 그룹 */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            {/* 이전 버튼 */}
-            <Button
-              onClick={onBack}
-              variant="outline"
-              size="lg"
-              className="sm:flex-1"
-            >
-              이전
-            </Button>
-
-            {/* 분석하기 버튼 (선택사항) */}
-            {!isConfirmed && isValidLength && (
-              <Button
-                onClick={handleAnalyze}
-                variant="secondary"
-                size="lg"
-                className="sm:flex-1"
-              >
-                분석하기
-              </Button>
-            )}
-
-            {/* 다음 버튼 */}
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed}
-              size="lg"
-              className="sm:flex-1"
-            >
-              다음
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 도움말 카드 */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold mb-2">💡 작성 팁</h3>
-          <ul className="text-sm text-muted-foreground space-y-1.5">
-            <li>• 최근 경력부터 시간 순서대로 작성하면 좋습니다</li>
-            <li>• 반복적으로 수행한 업무를 구체적으로 적어주세요</li>
-            <li>• 사용한 도구나 기술을 명시하면 더 정확한 진단이 가능합니다</li>
-            <li>• 성과나 수치가 있다면 함께 작성해주세요</li>
-          </ul>
-        </CardContent>
-      </Card>
+        {/* 이전 버튼 */}
+        <Button
+          onClick={onBack}
+          variant="ghost"
+          size="lg"
+          className="w-full"
+        >
+          이전
+        </Button>
+      </div>
     </div>
   );
 }

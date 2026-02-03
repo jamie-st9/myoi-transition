@@ -224,7 +224,7 @@ export function FileUpload({ onTextExtracted, disabled = false }: FileUploadProp
             PDF 또는 DOCX 파일을 드래그하거나 클릭하여 업로드
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            최대 5MB
+            파일 5MB
           </p>
         </button>
       </div>
