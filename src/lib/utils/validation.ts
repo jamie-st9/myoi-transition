@@ -3,7 +3,7 @@
  * MyOi TRANSITION MVP - 사용자 입력 검증
  */
 
-import type { RealityCheckInput, CareerSnapshotInput } from '../types/input';
+import type { RealityCheckInput, RealityCheckFormState, CareerSnapshotInput } from '../types/input';
 
 /**
  * 현실 점검 데이터 유효성 검증
@@ -12,7 +12,7 @@ import type { RealityCheckInput, CareerSnapshotInput } from '../types/input';
  * @returns 에러 메시지 배열 (빈 배열이면 유효함)
  */
 export function validateRealityCheck(
-  input: Partial<RealityCheckInput>
+  input: Partial<RealityCheckInput> | RealityCheckFormState
 ): string[] {
   const errors: string[] = [];
 
@@ -135,7 +135,7 @@ export function validateEmail(email: string): boolean {
   }
 
   // 로컬 파트 검증 (@ 앞부분)
-  const [localPart, domain] = trimmed.split('@');
+  const [localPart] = trimmed.split('@');
   if (localPart.length > 64) {
     return false;
   }

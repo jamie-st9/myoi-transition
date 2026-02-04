@@ -32,7 +32,7 @@ interface IdeaInputProps {
  * - 아이디어 보유 여부 (토글)
  * - 아이디어 설명 (보유 시)
  */
-export function IdeaInput({ data, onChange, onSubmit, onBack, isLoading }: IdeaInputProps) {
+export function IdeaInput({ data, onChange, onSubmit, isLoading }: IdeaInputProps) {
   // 아이디어 보유 여부 토글 핸들러
   const handleHasIdeaChange = (checked: boolean) => {
     onChange({

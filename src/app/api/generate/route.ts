@@ -31,13 +31,32 @@ async function callGemini(
     systemInstruction: system,
   });
 
-  const result = await model.generateContent({
+  const apiPromise = model.generateContent({
     contents: [{ role: 'user', parts: [{ text: user }] }],
     generationConfig: {
       responseMimeType: 'application/json',
       maxOutputTokens: 2048,
     },
   });
+
+  let result;
+  if (signal) {
+    // AbortSignal을 Promise.race로 적용 (SDK가 signal을 직접 지원하지 않음)
+    const abortPromise = new Promise<never>((_, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException('The operation was aborted.', 'AbortError'));
+        return;
+      }
+      signal.addEventListener(
+        'abort',
+        () => reject(new DOMException('The operation was aborted.', 'AbortError')),
+        { once: true }
+      );
+    });
+    result = await Promise.race([apiPromise, abortPromise]);
+  } else {
+    result = await apiPromise;
+  }
 
   const responseText = result.response.text();
 
@@ -90,7 +109,7 @@ function parseJsonResponse<T>(text: string): T {
 
     const jsonText = jsonMatch[1] || jsonMatch[0];
     return JSON.parse(jsonText);
-  } catch (error) {
+  } catch {
     console.error('JSON 파싱 실패:', text);
     throw new Error('응답 형식이 올바르지 않습니다.');
   }
@@ -149,7 +168,7 @@ export async function POST(request: NextRequest) {
     let input: unknown;
     try {
       input = await request.json();
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: ERROR_MESSAGES.VALIDATION_ERROR },
         { status: 400 }

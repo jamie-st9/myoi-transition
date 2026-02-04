@@ -11,21 +11,21 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { ChevronLeft } from 'lucide-react';
 import { validateRealityCheck } from '@/lib/utils/validation';
 import { REALITY_CHECK_OPTIONS } from '@/lib/constants/config';
-import type { RealityCheckInput } from '@/lib/types/input';
+import type { RealityCheckInput, RealityCheckFormState } from '@/lib/types/input';
 import { cn } from '@/lib/utils';
 
 interface RealityCheckProps {
-  /** 현재 입력 데이터 */
-  data: RealityCheckInput;
+  /** 현재 입력 데이터 (allows empty initial values for select fields) */
+  data: RealityCheckFormState;
   /** 데이터 변경 핸들러 */
-  onChange: (data: RealityCheckInput) => void;
+  onChange: (data: RealityCheckFormState) => void;
   /** 다음 단계로 진행 핸들러 */
   onNext: () => void;
   /** 뒤로가기 핸들러 (선택사항) */
@@ -41,14 +41,11 @@ interface RealityCheckProps {
  * - 실패 허용 정도
  */
 export function RealityCheck({ data, onChange, onNext, onBack }: RealityCheckProps) {
-  const [errors, setErrors] = useState<string[]>([]);
-
-  // 데이터 변경 시 유효성 검증 (absoluteConstraints 제외)
-  useEffect(() => {
-    const validationErrors = validateRealityCheck(data).filter(
+  // Compute validation errors from data (absoluteConstraints excluded)
+  const errors = useMemo(() => {
+    return validateRealityCheck(data).filter(
       (error) => !error.includes('절대적 제약')
     );
-    setErrors(validationErrors);
   }, [data]);
 
   // 다음 단계로 진행 가능 여부

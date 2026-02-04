@@ -13,8 +13,8 @@ import { CareerSnapshot } from '@/components/input/CareerSnapshot';
 import { IdeaInput } from '@/components/input/IdeaInput';
 import { LoadingScreen } from '@/components/input/LoadingScreen';
 import type {
-  CompleteInput,
-  RealityCheckInput,
+  CompleteInputFormState,
+  RealityCheckFormState,
   CareerSnapshotInput,
   IdeaInput as IdeaInputType,
 } from '@/lib/types/input';
@@ -57,11 +57,11 @@ export default function InputPage() {
   const [error, setError] = useState<string | null>(null);
 
   // 폼 데이터 상태
-  const [formData, setFormData] = useState<CompleteInput>({
+  const [formData, setFormData] = useState<CompleteInputFormState>({
     realityCheck: {
-      weeklyHours: '' as RealityCheckInput['weeklyHours'],
-      budgetLimit: '' as RealityCheckInput['budgetLimit'],
-      failureTolerance: '' as RealityCheckInput['failureTolerance'],
+      weeklyHours: '',
+      budgetLimit: '',
+      failureTolerance: '',
       absoluteConstraints: '',
     },
     careerSnapshot: {
@@ -73,7 +73,7 @@ export default function InputPage() {
   });
 
   // 1단계: 현실 점검 데이터 변경 핸들러
-  const handleRealityCheckChange = (data: RealityCheckInput) => {
+  const handleRealityCheckChange = (data: RealityCheckFormState) => {
     setFormData((prev) => ({
       ...prev,
       realityCheck: data,
@@ -116,6 +116,13 @@ export default function InputPage() {
 
   // 최종 제출 및 리포트 생성
   const handleSubmit = async () => {
+    // Validate required select fields before submission
+    const { weeklyHours, budgetLimit, failureTolerance } = formData.realityCheck;
+    if (!weeklyHours || !budgetLimit || !failureTolerance) {
+      setError('현실 점검 항목을 모두 선택해주세요.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 

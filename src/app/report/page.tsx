@@ -17,6 +17,7 @@ import { EmailCTA } from "@/components/report/EmailCTA";
 export default function ReportPage() {
   const [reportData, setReportData] = useState<CompleteReport | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // sessionStorage에서 리포트 데이터 로드
@@ -30,8 +31,11 @@ export default function ReportPage() {
 
       const parsedData: CompleteReport = JSON.parse(storedData);
       setReportData(parsedData);
-    } catch (error) {
-      console.error("Failed to load report data:", error);
+    } catch (err) {
+      console.error("Failed to load report data:", err);
+      setError(
+        "리포트 데이터를 불러오는 데 실패했습니다. 다시 진단을 진행해주세요."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +50,55 @@ export default function ReportPage() {
           <p className="text-base text-neutral-600">
             리포트를 불러오는 중...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 발생 시
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#FAF8F5]">
+        <div className="max-w-md text-center space-y-6">
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-100 flex items-center justify-center">
+            <span className="text-2xl text-red-600">!</span>
+          </div>
+          <h1 className="text-2xl font-bold text-neutral-900">
+            오류가 발생했습니다
+          </h1>
+          <p className="text-base text-neutral-600 leading-relaxed">{error}</p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                try {
+                  const storedData =
+                    sessionStorage.getItem("myoi-report-data");
+                  if (storedData) {
+                    const parsedData: CompleteReport = JSON.parse(storedData);
+                    setReportData(parsedData);
+                  }
+                } catch (retryErr) {
+                  console.error("Retry failed:", retryErr);
+                  setError(
+                    "리포트 데이터를 불러오는 데 실패했습니다. 다시 진단을 진행해주세요."
+                  );
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="inline-flex items-center justify-center h-12 px-8 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
+            >
+              다시 시도
+            </button>
+            <Link
+              href="/input"
+              className="inline-flex items-center justify-center h-12 px-8 rounded-xl border border-neutral-300 text-neutral-700 font-semibold hover:bg-neutral-50 transition-colors"
+            >
+              입력 페이지로 이동
+            </Link>
+          </div>
         </div>
       </div>
     );

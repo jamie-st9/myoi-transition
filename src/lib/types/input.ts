@@ -48,12 +48,40 @@ export interface IdeaInput {
 }
 
 /**
+ * Form state variant of RealityCheckInput that allows empty initial values
+ * for select fields before user selection.
+ */
+export interface RealityCheckFormState {
+  /** 주당 투입 가능 시간 (empty before selection) */
+  weeklyHours: RealityCheckInput['weeklyHours'] | '';
+  /** 예산 한도 (empty before selection) */
+  budgetLimit: RealityCheckInput['budgetLimit'] | '';
+  /** 실패 허용 정도 (empty before selection) */
+  failureTolerance: RealityCheckInput['failureTolerance'] | '';
+  /** 절대적 제약 조건 (자유 텍스트) */
+  absoluteConstraints: string;
+}
+
+/**
  * 전체 입력 데이터
  * 3단계 입력을 통합한 완전한 진단 입력
  */
 export interface CompleteInput {
   /** 현실 점검 데이터 */
   realityCheck: RealityCheckInput;
+  /** 커리어 스냅샷 데이터 */
+  careerSnapshot: CareerSnapshotInput;
+  /** 아이디어 데이터 */
+  idea: IdeaInput;
+}
+
+/**
+ * Form state variant of CompleteInput that allows empty initial values.
+ * Used by the input form before validation.
+ */
+export interface CompleteInputFormState {
+  /** 현실 점검 데이터 (allows empty select fields) */
+  realityCheck: RealityCheckFormState;
   /** 커리어 스냅샷 데이터 */
   careerSnapshot: CareerSnapshotInput;
   /** 아이디어 데이터 */
