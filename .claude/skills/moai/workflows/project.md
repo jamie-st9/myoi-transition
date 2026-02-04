@@ -131,6 +131,35 @@ Output Files:
 
 ---
 
+## Phase 3.3: Design Directory Setup
+
+Goal: Create design management infrastructure for Pencil MCP integration.
+
+[SOFT] This phase runs automatically when Pencil MCP tools are available in the environment.
+
+Actions:
+
+1. Create `designs/` directory in project root if not exists
+2. Create `designs/screenshots/.gitkeep` if not exists
+3. Add designs directory configuration to `.moai/config/sections/system.yaml` under `document_management.directories` if not already present:
+
+```yaml
+    designs:
+      base: designs/
+      retention_days: null
+      description: Pencil .pen files and screenshot backups for UI designs
+      subdirectories:
+        screenshots: designs/screenshots/
+```
+
+4. Verify `.gitignore` does not exclude `.pen` files
+
+Skip Condition: If `designs/` directory already exists with proper configuration, skip this phase entirely.
+
+Completion: Design infrastructure ready for Pencil MCP workflows.
+
+---
+
 ## Phase 3.5: Development Environment Check
 
 Goal: Verify LSP servers are installed for the detected technology stack.
@@ -208,6 +237,7 @@ All of the following must be verified:
 - Phase 1: Codebase analysis completed (existing projects) or user input collected (new projects)
 - Phase 2: User approved analysis summary
 - Phase 3: All documentation files generated (product.md, structure.md, tech.md)
+- Phase 3.3: Design directory created (if Pencil MCP available)
 - Phase 3.5: LSP environment checked
 - Phase 4: Next steps presented to user
 - Task tracking: Documentation task created and completed
@@ -217,10 +247,11 @@ All of the following must be verified:
 - Phase 0-2: MoAI orchestrator (AskUserQuestion for all user interaction)
 - Phase 1: Explore subagent (codebase analysis)
 - Phase 3: manager-docs subagent (documentation generation)
+- Phase 3.3: MoAI orchestrator (design directory setup, automatic)
 - Phase 3.5: expert-devops subagent (optional LSP installation)
 - Phase 4: manager-git subagent (optional commit)
 
 ---
 
-Version: 1.1.0
-Source: Added context loading, task tracking, git operations, completion criteria, graceful exit.
+Version: 1.2.0
+Source: Added design directory setup phase (Phase 3.3) for Pencil MCP integration.
