@@ -33,3 +33,9 @@ document_management:
       base: .moai/cache/
       retention_days: 30
       auto_cleanup: true
+    designs:
+      base: designs/
+      retention_days: null
+      description: Pencil .pen files and screenshot backups for UI designs
+      subdirectories:
+        screenshots: designs/screenshots/
