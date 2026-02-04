@@ -1,160 +1,134 @@
 /**
- * AI 분석 로딩 화면 컴포넌트
- * 진단 리포트 생성 중 진행 상태를 시각적으로 표시
+ * AI analysis loading screen component
+ * Displays progress phases while generating the diagnostic report
  */
 
-import { Check, Loader2 } from 'lucide-react';
+import { Brain, CheckCircle, Loader, Circle } from 'lucide-react';
 
-/** 각 단계의 진행 상태 타입 */
+/** Progress status type for each phase */
 type ProgressStatus = 'pending' | 'loading' | 'complete';
 
 interface LoadingScreenProps {
-  /** 각 단계별 진행 상태 */
+  /** Progress status for each phase */
   progress: {
-    /** 현실 점검 리포트 생성 상태 */
+    /** Reality report generation status */
     realityReport: ProgressStatus;
-    /** 수익화 지도 생성 상태 */
+    /** Income map generation status */
     incomeMap: ProgressStatus;
-    /** 결정 질문 생성 상태 */
+    /** Decision questions generation status */
     decisionQuestions: ProgressStatus;
   };
 }
 
-/** 진행 단계 정의 */
+/** Phase definitions */
 const PROGRESS_STEPS = [
-  { key: 'realityReport', label: '현실 점검 리포트 생성' },
-  { key: 'incomeMap', label: '수익화 지도 생성' },
-  { key: 'decisionQuestions', label: '결정 질문 생성' },
+  { key: 'realityReport', label: '현실점검 리포트' },
+  { key: 'incomeMap', label: '수익화 지도' },
+  { key: 'decisionQuestions', label: '결정 질문' },
 ] as const;
 
 /**
- * LoadingScreen 컴포넌트
+ * LoadingScreen component
  *
- * AI가 사용자 입력 데이터를 분석하여 맞춤형 진단 리포트를 생성하는 동안
- * 진행 상태를 시각적으로 표시합니다.
- *
- * 디자인 특징:
- * - 전체 화면 중앙 정렬
- * - 연한 베이지 배경색
- * - 큰 로딩 스피너 (네이비 색상)
- * - 진행 상태 체크리스트
+ * Displays a full-page loading screen with animated spinner,
+ * brain icon, and phase progress indicators while the AI
+ * generates the diagnostic report.
  */
 export function LoadingScreen({ progress }: LoadingScreenProps) {
-  /**
-   * 진행 상태에 따른 아이콘 및 스타일 렌더링
-   */
-  const renderStatusIcon = (status: ProgressStatus) => {
-    switch (status) {
-      case 'complete':
-        return (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1E3A5F]">
-            <Check className="h-4 w-4 text-white" aria-hidden="true" />
-          </div>
-        );
-      case 'loading':
-        return (
-          <div className="flex h-6 w-6 items-center justify-center">
-            <span className="relative flex h-3 w-3">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1E3A5F] opacity-75" />
-              <span className="relative inline-flex h-3 w-3 rounded-full bg-[#1E3A5F]" />
-            </span>
-          </div>
-        );
-      case 'pending':
-      default:
-        return (
-          <div className="flex h-6 w-6 items-center justify-center">
-            <span className="h-3 w-3 rounded-full bg-gray-300" />
-          </div>
-        );
-    }
-  };
-
-  /**
-   * 진행 상태에 따른 텍스트 스타일
-   */
-  const getStatusTextStyle = (status: ProgressStatus) => {
-    switch (status) {
-      case 'complete':
-        return 'text-[#1E3A5F] font-medium';
-      case 'loading':
-        return 'text-[#1E3A5F] font-medium';
-      case 'pending':
-      default:
-        return 'text-gray-400';
-    }
-  };
-
-  /**
-   * 진행 상태에 따른 접미사 텍스트
-   */
-  const getStatusSuffix = (status: ProgressStatus) => {
-    switch (status) {
-      case 'complete':
-        return ' 완료';
-      case 'loading':
-        return ' 중...';
-      case 'pending':
-      default:
-        return '';
-    }
-  };
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#FAF8F5]"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#FAF8F5]"
       role="status"
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="flex flex-col items-center px-6 text-center">
-        {/* 로딩 스피너 */}
-        <div className="mb-8">
-          <Loader2
-            className="h-16 w-16 animate-spin text-[#1E3A5F]"
-            aria-hidden="true"
-          />
+      <div className="flex flex-col items-center">
+        {/* Spinner with brain icon */}
+        <div className="relative mb-6 flex items-center justify-center">
+          {/* Outer ring - border stroke */}
+          <div className="absolute h-16 w-16 rounded-full border-[4px] border-[#E5E7EB]" />
+          {/* Animated arc - primary stroke */}
+          <div className="absolute h-16 w-16 animate-spin rounded-full border-[4px] border-transparent border-t-[#2563EB]" />
+          {/* Brain icon in center */}
+          <Brain className="h-8 w-8 text-[#2563EB]" aria-hidden="true" />
         </div>
 
-        {/* 헤드라인 */}
-        <h1 className="mb-4 text-2xl font-bold text-[#1E3A5F] sm:text-3xl">
-          AI가 분석 중입니다
+        {/* Title */}
+        <h1 className="mb-2 text-[20px] font-semibold text-[#1A1A1A]">
+          AI가 분석 중입니다...
         </h1>
 
-        {/* 설명 텍스트 */}
-        <div className="mb-8 space-y-1">
-          <p className="text-base text-gray-600 sm:text-lg">
-            입력하신 정보를 바탕으로
-          </p>
-          <p className="text-base text-gray-600 sm:text-lg">
-            맞춤형 진단 리포트를 생성하고 있습니다.
-          </p>
-        </div>
+        {/* Description */}
+        <p className="mb-8 text-center text-[14px] leading-[1.5] text-[#6B7280]">
+          입력하신 정보를 바탕으로
+          <br />
+          맞춤형 진단 리포트를 생성하고 있습니다
+        </p>
 
-        {/* 진행 상태 체크리스트 */}
-        <div className="mb-8 w-full max-w-sm space-y-4">
+        {/* Phase progress items */}
+        <div className="flex w-full flex-col gap-3 px-8">
           {PROGRESS_STEPS.map((step) => {
             const status = progress[step.key as keyof typeof progress];
             return (
-              <div
+              <PhaseItem
                 key={step.key}
-                className="flex items-center gap-3"
-              >
-                {renderStatusIcon(status)}
-                <span className={`text-left text-sm sm:text-base ${getStatusTextStyle(status)}`}>
-                  {step.label}
-                  {getStatusSuffix(status)}
-                </span>
-              </div>
+                label={step.label}
+                status={status}
+              />
             );
           })}
         </div>
-
-        {/* 하단 안내 */}
-        <p className="text-sm text-gray-500">
-          약 10-15초 소요됩니다
-        </p>
       </div>
+    </div>
+  );
+}
+
+/** Individual phase progress item */
+function PhaseItem({
+  label,
+  status,
+}: {
+  label: string;
+  status: ProgressStatus;
+}) {
+  if (status === 'complete') {
+    return (
+      <div className="flex h-12 items-center rounded-xl bg-[#FFFFFF] px-4">
+        <CheckCircle className="h-5 w-5 flex-shrink-0 text-[#16A34A]" aria-hidden="true" />
+        <span className="ml-3 flex-1 text-[14px] font-medium text-[#1A1A1A]">
+          {label}
+        </span>
+        <span className="text-[12px] font-medium text-[#16A34A]">
+          완료
+        </span>
+      </div>
+    );
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="flex h-12 items-center rounded-xl border border-[#2563EB] bg-[#EFF6FF] px-4">
+        <Loader className="h-5 w-5 flex-shrink-0 animate-spin text-[#2563EB]" aria-hidden="true" />
+        <span className="ml-3 flex-1 text-[14px] font-medium text-[#2563EB]">
+          {label}
+        </span>
+        <span className="text-[12px] font-medium text-[#2563EB]">
+          분석 중...
+        </span>
+      </div>
+    );
+  }
+
+  // pending
+  return (
+    <div className="flex h-12 items-center rounded-xl bg-[#FFFFFF] px-4">
+      <Circle className="h-5 w-5 flex-shrink-0 text-[#D1D5DB]" strokeWidth={2} aria-hidden="true" />
+      <span className="ml-3 flex-1 text-[14px] font-medium text-[#9CA3AF]">
+        {label}
+      </span>
+      <span className="text-[12px] font-medium text-[#9CA3AF]">
+        대기
+      </span>
     </div>
   );
 }

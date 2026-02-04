@@ -1,31 +1,29 @@
 /**
- * 이메일 CTA 컴포넌트
- * 리포트를 이메일로 받기
- * Pencil 디자인 적용
+ * Email CTA component
+ * Allows users to receive the report via email
  */
 
 "use client";
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 
 export function EmailCTA() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "error" | "success">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
-  // 이메일 유효성 검사
+  // Email validation
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // 제출 핸들러
+  // Submit handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 유효성 검사
+    // Validation
     if (!email.trim()) {
       setStatus("error");
       setErrorMessage("이메일 주소를 입력하세요");
@@ -38,69 +36,77 @@ export function EmailCTA() {
       return;
     }
 
-    // MVP: 콘솔에 로그만 출력
+    // MVP: Log to console only
     console.log("Email submitted:", email);
 
-    // 성공 상태로 변경
+    // Set success state
     setStatus("success");
     setEmail("");
   };
 
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm">
-      {/* 제목 */}
-      <h3 className="text-base font-bold text-neutral-900 mb-2">
-        리포트를 이메일로 받기
-      </h3>
+    <div className="rounded-2xl bg-[#FFFFFF] px-6 py-6">
+      <div className="flex flex-col items-center text-center">
+        {/* Mail icon */}
+        <Mail className="mb-3 h-7 w-7 text-[#2563EB]" aria-hidden="true" />
 
-      {/* 설명 */}
-      <p className="text-sm text-neutral-600 mb-4">
-        진단 결과를 확인하고 나서도 다시 보실 수 있어요.
-      </p>
+        {/* Title */}
+        <h3 className="mb-1 text-[16px] font-semibold text-[#1A1A1A]">
+          결과를 이메일로 받아보세요
+        </h3>
 
-      {/* 폼 또는 성공 메시지 */}
-      {status === "success" ? (
-        <div className="rounded-xl bg-green-50 border border-green-200 p-4">
-          <p className="text-sm font-medium text-green-700">
-            이메일로 전송되었습니다!
-          </p>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          {/* 이메일 입력 */}
-          <Input
-            type="email"
-            placeholder="이메일 주소"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              setStatus("idle");
-              setErrorMessage("");
-            }}
-            className={`w-full h-12 rounded-xl bg-neutral-100 border-0 text-sm placeholder:text-neutral-400 ${
-              status === "error"
-                ? "ring-2 ring-red-500"
-                : ""
-            }`}
-            aria-invalid={status === "error"}
-          />
+        {/* Description */}
+        <p className="mb-4 text-[13px] text-[#6B7280]">
+          진단 결과 전문을 이메일로 받아볼 수 있습니다
+        </p>
 
-          {/* 에러 메시지 */}
-          {status === "error" && (
-            <p className="text-xs text-red-500">
-              {errorMessage}
+        {/* Success message or form */}
+        {status === "success" ? (
+          <div className="w-full rounded-[10px] border border-green-200 bg-green-50 p-4">
+            <p className="text-[13px] font-medium text-green-700">
+              이메일로 전송되었습니다!
             </p>
-          )}
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="w-full">
+            <div className="flex gap-2">
+              {/* Email input */}
+              <input
+                type="email"
+                placeholder="이메일 주소"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setStatus("idle");
+                  setErrorMessage("");
+                }}
+                className={`h-11 flex-1 rounded-[10px] border bg-[#F5F2ED] px-3 text-[14px] text-[#1A1A1A] placeholder:text-[#9CA3AF] outline-none transition-colors ${
+                  status === "error"
+                    ? "border-[#DC2626]"
+                    : "border-[#E5E7EB] focus:border-[#2563EB]"
+                }`}
+                aria-invalid={status === "error"}
+                aria-describedby={status === "error" ? "email-error" : undefined}
+              />
 
-          {/* 버튼 */}
-          <Button
-            type="submit"
-            className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm"
-          >
-            이메일로 보기
-          </Button>
-        </form>
-      )}
+              {/* Send button */}
+              <button
+                type="submit"
+                className="h-11 w-20 flex-shrink-0 rounded-[10px] bg-[#2563EB] text-[14px] font-medium text-white transition-colors hover:bg-[#1D4ED8]"
+              >
+                전송
+              </button>
+            </div>
+
+            {/* Error message */}
+            {status === "error" && (
+              <p id="email-error" className="mt-2 text-left text-[12px] text-[#DC2626]">
+                {errorMessage}
+              </p>
+            )}
+          </form>
+        )}
+      </div>
     </div>
   );
 }

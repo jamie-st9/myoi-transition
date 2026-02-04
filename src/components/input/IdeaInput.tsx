@@ -1,39 +1,36 @@
 /**
- * 아이디어 입력 컴포넌트 (3단계)
- * 사용자가 이미 가진 전환 아이디어 여부 확인
+ * Idea input component (Step 3)
+ * Checks if user already has a career transition idea
  */
 
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { HelpCircle, Loader2 } from 'lucide-react';
+import { Sparkles, Info, Loader2 } from 'lucide-react';
 import type { IdeaInput } from '@/lib/types/input';
+import { cn } from '@/lib/utils';
 
 interface IdeaInputProps {
-  /** 현재 입력 데이터 */
+  /** Current input data */
   data: IdeaInput;
-  /** 데이터 변경 핸들러 */
+  /** Data change handler */
   onChange: (data: IdeaInput) => void;
-  /** 진단 시작 핸들러 */
+  /** Submit handler */
   onSubmit: () => void;
-  /** 이전 단계로 돌아가기 핸들러 */
+  /** Previous step handler */
   onBack: () => void;
-  /** 로딩 상태 */
+  /** Loading state */
   isLoading: boolean;
 }
 
 /**
- * IdeaInput 컴포넌트
+ * IdeaInput component
  *
- * 사용자의 전환 아이디어 보유 여부를 확인합니다:
- * - 아이디어 보유 여부 (토글)
- * - 아이디어 설명 (보유 시)
+ * Checks whether user has a transition idea:
+ * - Toggle for idea existence
+ * - Idea description textarea (when toggled on)
  */
-export function IdeaInput({ data, onChange, onSubmit, isLoading }: IdeaInputProps) {
-  // 아이디어 보유 여부 토글 핸들러
+export function IdeaInput({ data, onChange, onSubmit, onBack, isLoading }: IdeaInputProps) {
+  // Toggle handler for idea existence
   const handleHasIdeaChange = (checked: boolean) => {
     onChange({
       hasIdea: checked,
@@ -41,34 +38,59 @@ export function IdeaInput({ data, onChange, onSubmit, isLoading }: IdeaInputProp
     });
   };
 
-  // 제출 가능 여부 (아이디어가 없거나, 있으면 설명이 10자 이상)
+  // Whether submit is possible (no idea, or idea with 10+ chars)
   const canSubmit = !data.hasIdea ||
     (data.hasIdea && data.ideaSummary && data.ideaSummary.trim().length >= 10);
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      {/* 토글 섹션 */}
-      <div className="flex items-center justify-between py-4">
-        <Label htmlFor="has-idea" className="text-base font-medium cursor-pointer">
-          전환하고 싶은 아이디어가 있나요?
-        </Label>
-        <Switch
-          id="has-idea"
-          checked={data.hasIdea}
-          onCheckedChange={handleHasIdeaChange}
-          disabled={isLoading}
-          className="data-[state=checked]:bg-blue-500"
-        />
+    <div className="space-y-6">
+      {/* Title section */}
+      <div className="space-y-1.5">
+        <p className="text-[13px] font-medium text-[#2563EB]">Step 3 of 3</p>
+        <h2 className="text-[28px] font-bold tracking-[-0.5px] text-[#1A1A1A]">
+          전환 아이디어
+        </h2>
+        <p className="text-[14px] text-[#6B7280]">
+          이미 생각하고 있는 전환 방향이 있다면 알려주세요
+        </p>
       </div>
 
-      {/* 아이디어 설명 입력 (토글 ON일 때만 표시) */}
+      {/* Toggle section */}
+      <div className="rounded-[12px] bg-[#FFFFFF] border border-[#E5E7EB] p-4">
+        <div className="flex items-center justify-between">
+          <span className="text-[14px] font-medium text-[#1A1A1A]">
+            이미 전환 아이디어가 있나요?
+          </span>
+          {/* Toggle switch */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={data.hasIdea}
+            onClick={() => handleHasIdeaChange(!data.hasIdea)}
+            disabled={isLoading}
+            className={cn(
+              'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors',
+              data.hasIdea ? 'bg-[#2563EB]' : 'bg-[#D1D5DB]',
+              isLoading && 'opacity-50 cursor-not-allowed'
+            )}
+          >
+            <span
+              className={cn(
+                'pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm ring-0 transition-transform mt-0.5',
+                data.hasIdea ? 'translate-x-[22px]' : 'translate-x-0.5'
+              )}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Idea card (shown when toggled on) */}
       {data.hasIdea && (
-        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-          <Label htmlFor="idea-summary" className="text-sm font-medium text-muted-foreground">
-            아이디어 설명
-          </Label>
-          <Textarea
-            id="idea-summary"
+        <div className="rounded-[12px] bg-[#FFFFFF] border border-[#E5E7EB] p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+          <label className="text-[14px] font-semibold text-[#1A1A1A]">
+            전환 아이디어 요약
+          </label>
+          <textarea
             value={data.ideaSummary || ''}
             onChange={(e) =>
               onChange({
@@ -76,69 +98,74 @@ export function IdeaInput({ data, onChange, onSubmit, isLoading }: IdeaInputProp
                 ideaSummary: e.target.value,
               })
             }
-            placeholder="예: 퇴직 후 커피 로스팅 사업을 시작하고 싶습니다.&#10;온라인 판매와 소규모 카페를 생각하고 있어요."
-            className="min-h-32 text-base bg-white rounded-xl border-gray-200 focus:border-gray-300"
+            placeholder={"예: 퇴직 후 커피 로스팅 사업을 시작하고 싶습니다.\n온라인 판매와 소규모 카페를 생각하고 있어요."}
+            className="w-full h-[120px] rounded-[10px] border border-[#E5E7EB] bg-[#F5F2ED] px-4 py-3 text-[14px] text-[#1A1A1A] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors"
             maxLength={1000}
             disabled={isLoading}
           />
-          <div className="flex justify-between items-center">
-            {/* 최소 길이 안내 */}
-            {data.ideaSummary && data.ideaSummary.trim().length < 10 ? (
-              <p className="text-sm text-destructive">
-                최소 10자 이상 입력해주세요
-              </p>
-            ) : (
-              <span />
-            )}
-            <p className="text-xs text-muted-foreground">
-              {(data.ideaSummary || '').length}/1000
+          {/* Min length warning */}
+          {data.ideaSummary && data.ideaSummary.trim().length > 0 && data.ideaSummary.trim().length < 10 && (
+            <p className="text-[12px] text-[#DC2626]">
+              최소 10자 이상 입력해주세요
             </p>
+          )}
+          {/* Hint */}
+          <div className="flex items-center gap-1.5">
+            <Info className="h-3.5 w-3.5 text-[#9CA3AF] shrink-0" />
+            <span className="text-[12px] text-[#9CA3AF]">
+              없어도 괜찮습니다. AI가 방향을 제안합니다
+            </span>
           </div>
         </div>
       )}
 
-      {/* 안내 섹션 - 아이디어가 없어도 괜찮아요 */}
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-stone-100">
-        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-stone-300 flex items-center justify-center mt-0.5">
-          <HelpCircle className="w-3 h-3 text-stone-600" />
-        </div>
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-stone-700">
-            아이디어가 없어도 괜찮아요
-          </p>
-          <p className="text-sm text-stone-500">
-            아이디어 없이도 현실 점검과 수익화 지도를 받아보실 수 있습니다.
-          </p>
-        </div>
-      </div>
-
-      {/* 로딩 중 안내 메시지 */}
+      {/* Loading indicator */}
       {isLoading && (
-        <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-          <p className="text-sm text-blue-700 text-center font-medium">
+        <div className="rounded-[12px] bg-[#EFF6FF] border border-[#2563EB]/20 p-4">
+          <p className="text-[14px] text-[#2563EB] text-center font-medium">
             AI가 당신의 커리어를 분석하고 있습니다...
-            <br />
-            <span className="text-xs font-normal">잠시만 기다려주세요 (약 10-15초 소요)</span>
+          </p>
+          <p className="text-[12px] text-[#6B7280] text-center mt-1">
+            잠시만 기다려주세요 (약 10-15초 소요)
           </p>
         </div>
       )}
 
-      {/* 진단 시작 버튼 */}
-      <Button
-        onClick={onSubmit}
-        disabled={!canSubmit || isLoading}
-        size="lg"
-        className="w-full min-h-14 text-base font-semibold bg-[#1E3A5F] hover:bg-[#162d4a] text-white rounded-xl"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            진단 생성 중...
-          </>
-        ) : (
-          '진단 시작'
-        )}
-      </Button>
+      {/* Button row: Previous + Submit */}
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          disabled={isLoading}
+          className={cn(
+            'flex flex-1 items-center justify-center h-[52px] rounded-[12px] border border-[#E5E7EB] bg-[#FFFFFF] text-[16px] font-semibold text-[#6B7280] transition-colors',
+            isLoading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'
+          )}
+        >
+          이전
+        </button>
+        <button
+          onClick={onSubmit}
+          disabled={!canSubmit || isLoading}
+          className={cn(
+            'flex flex-1 items-center justify-center gap-2 h-[52px] rounded-[12px] text-[16px] font-semibold transition-all',
+            canSubmit && !isLoading
+              ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
+              : 'bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed'
+          )}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-5 w-5 animate-spin" />
+              진단 생성 중...
+            </>
+          ) : (
+            <>
+              진단 시작
+              <Sparkles className="h-5 w-5" />
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

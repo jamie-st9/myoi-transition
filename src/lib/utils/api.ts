@@ -3,6 +3,9 @@
  * MyOi TRANSITION MVP - 클라이언트 사이드 API 호출 헬퍼
  */
 
+'use client';
+
+import React from 'react';
 import type { CompleteInput } from '../types/input';
 import type { CompleteReport } from '../types/report';
 import { ERROR_MESSAGES } from '../constants/config';
@@ -138,6 +141,3 @@ export function useReportGeneration() {
     error: status.status === 'error' ? status.error : undefined,
   };
 }
-
-// React import (conditional)
-import React from 'react';

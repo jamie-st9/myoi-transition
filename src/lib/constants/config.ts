@@ -17,10 +17,10 @@ export const APP_CONFIG = {
   maxResumeLength: 5000,
   /** 이력서 최소 길이 (문자) */
   minResumeLength: 50,
-  /** API 요청 타임아웃 (밀리초) */
-  apiTimeout: 15000,
+  /** API 요청 타임아웃 (밀리초) - Vercel Pro plan: 60초, Free plan: 10초 제한 */
+  apiTimeout: 25000, // 25초 (Vercel Pro의 60초 제한 내에서 안전함)
   /** API 요청 최대 재시도 횟수 */
-  maxRetries: 2,
+  maxRetries: 1, // 재시도는 1회로 제한 (타임아웃 시간 절약)
 } as const;
 
 /**
@@ -58,14 +58,8 @@ export const DIAGNOSTIC_STEPS = {
  * API 엔드포인트
  */
 export const API_ENDPOINTS = {
-  /** Reality Report 생성 */
-  REALITY_REPORT: '/api/generate/reality-report',
-  /** Income Map 생성 */
-  INCOME_MAP: '/api/generate/income-map',
-  /** Decision Questions 생성 */
-  DECISION_QUESTIONS: '/api/generate/decision-questions',
   /** 완전한 리포트 생성 */
-  COMPLETE_REPORT: '/api/generate/complete-report',
+  COMPLETE_REPORT: '/api/generate',
 } as const;
 
 /**

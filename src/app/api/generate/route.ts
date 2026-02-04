@@ -3,6 +3,7 @@
  * MyOi TRANSITION MVP - 진단 리포트 생성 API
  */
 
+import 'server-only';
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { CompleteInput } from '@/lib/types/input';
@@ -157,9 +158,27 @@ export async function POST(request: NextRequest) {
     // 1. API 키 확인
     const apiKey = process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
-      console.error('GOOGLE_AI_API_KEY 환경 변수가 설정되지 않았습니다.');
+      const errorMsg = 'GOOGLE_AI_API_KEY 환경 변수가 설정되지 않았습니다. Vercel 대시보드에서 환경 변수를 설정해주세요.';
+      console.error(errorMsg);
+      console.error('Environment check:', {
+        isDefined: !!process.env.GOOGLE_AI_API_KEY,
+        nodeEnv: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      });
       return NextResponse.json(
-        { error: 'API 설정이 올바르지 않습니다.' },
+        {
+          error: 'API 설정이 올바르지 않습니다.',
+          debug: process.env.NODE_ENV === 'development' ? errorMsg : undefined,
+        },
+        { status: 500 }
+      );
+    }
+
+    // Validate API key format (should start with AIza for Gemini API)
+    if (!apiKey.startsWith('AIza')) {
+      console.error('Invalid API key format detected');
+      return NextResponse.json(
+        { error: 'API 키가 유효하지 않습니다.' },
         { status: 500 }
       );
     }
@@ -272,10 +291,17 @@ export async function POST(request: NextRequest) {
       }
 
       // 인증 에러
-      if (errorMessage.includes('api key') || errorMessage.includes('authentication')) {
+      if (errorMessage.includes('api key') || errorMessage.includes('authentication') || errorMessage.includes('unauthorized')) {
+        console.error('Authentication error details:', {
+          message: error.message,
+          timestamp: new Date().toISOString(),
+        });
         return NextResponse.json(
-          { error: 'API 인증에 실패했습니다.' },
-          { status: 500 }
+          {
+            error: 'API 인증에 실패했습니다. Vercel 환경 변수 설정을 확인하세요.',
+            code: 'AUTH_ERROR',
+          },
+          { status: 401 }
         );
       }
 

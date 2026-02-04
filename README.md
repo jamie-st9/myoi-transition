@@ -14,7 +14,7 @@
 | 분류 | 기술 |
 |------|------|
 | Frontend | Next.js 16 App Router, TypeScript, Tailwind CSS 4 |
-| UI | shadcn/ui, Radix UI |
+| UI | Custom Components, Lucide Icons, Inter Font |
 | AI | Google Gemini API (gemini-2.0-flash) |
 | Deployment | Vercel |
 
@@ -59,6 +59,35 @@ UI 디자인은 `designs/` 디렉터리에서 Pencil MCP를 통해 관리됩니�
 
 - `designs/myoi-transition.pen` - 디자인 소스 파일 (Landing, Step 1-3, Loading, Report 6개 화면)
 - `designs/screenshots/` - 디자인 스크린샷 백업
+
+## 프로젝트 구조
+
+```
+src/
+├── app/
+│   ├── page.tsx              # 랜딩 페이지
+│   ├── input/page.tsx        # 3단계 입력 프로세스
+│   ├── report/page.tsx       # AI 진단 리포트
+│   └── api/generate/route.ts # Gemini API 라우트
+├── components/
+│   ├── landing/Hero.tsx      # 랜딩 히어로 섹션
+│   ├── input/                # 입력 단계 컴포넌트
+│   │   ├── RealityCheck.tsx
+│   │   ├── CareerSnapshot.tsx
+│   │   ├── IdeaInput.tsx
+│   │   ├── ProgressIndicator.tsx
+│   │   └── LoadingScreen.tsx
+│   └── report/               # 리포트 컴포넌트
+│       ├── RealityReport.tsx
+│       ├── IncomeMap.tsx
+│       ├── DecisionQuestions.tsx
+│       └── EmailCTA.tsx
+└── lib/
+    ├── constants/config.ts   # 앱 설정 및 상수
+    ├── types/                # TypeScript 타입 정의
+    ├── prompts/              # Gemini 프롬프트 빌더
+    └── utils/api.ts          # API 유틸리티
+```
 
 ## 라이선스
 

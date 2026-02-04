@@ -1,46 +1,38 @@
 /**
- * 현실 점검 입력 컴포넌트 (1단계)
- * 사용자의 시간/예산/실패 허용도 등 현실적 제약 조건 수집
- *
- * Pencil 디자인 적용:
- * - 카드 없이 직접 폼 표시
- * - 연한 베이지 배경 (#FAF8F5)
- * - 선택된 옵션 파란 테두리 (#2563EB)
- * - 실패 허용 정도 버튼 그룹 (가로 배치)
+ * Reality check input component (Step 1)
+ * Collects user constraints: time, budget, failure tolerance, absolute constraints
  */
 
 'use client';
 
 import { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ChevronLeft } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { validateRealityCheck } from '@/lib/utils/validation';
 import { REALITY_CHECK_OPTIONS } from '@/lib/constants/config';
 import type { RealityCheckInput, RealityCheckFormState } from '@/lib/types/input';
 import { cn } from '@/lib/utils';
 
 interface RealityCheckProps {
-  /** 현재 입력 데이터 (allows empty initial values for select fields) */
+  /** Current input data (allows empty initial values for select fields) */
   data: RealityCheckFormState;
-  /** 데이터 변경 핸들러 */
+  /** Data change handler */
   onChange: (data: RealityCheckFormState) => void;
-  /** 다음 단계로 진행 핸들러 */
+  /** Next step handler */
   onNext: () => void;
-  /** 뒤로가기 핸들러 (선택사항) */
+  /** Back handler (optional) */
   onBack?: () => void;
 }
 
 /**
- * RealityCheck 컴포넌트
+ * RealityCheck component
  *
- * 사용자의 현실적 제약 조건을 수집합니다:
- * - 주당 투입 가능 시간
- * - 예산 한도
- * - 실패 허용 정도
+ * Collects realistic constraints:
+ * - Weekly available hours
+ * - Budget limit
+ * - Failure tolerance
+ * - Absolute constraints (optional textarea)
  */
-export function RealityCheck({ data, onChange, onNext, onBack }: RealityCheckProps) {
+export function RealityCheck({ data, onChange, onNext }: RealityCheckProps) {
   // Compute validation errors from data (absoluteConstraints excluded)
   const errors = useMemo(() => {
     return validateRealityCheck(data).filter(
@@ -48,20 +40,20 @@ export function RealityCheck({ data, onChange, onNext, onBack }: RealityCheckPro
     );
   }, [data]);
 
-  // 다음 단계로 진행 가능 여부
+  // Whether user can proceed
   const canProceed = errors.length === 0 &&
     data.weeklyHours &&
     data.budgetLimit &&
     data.failureTolerance;
 
-  // 다음 버튼 클릭 핸들러
+  // Next button click handler
   const handleNext = () => {
     if (canProceed) {
       onNext();
     }
   };
 
-  // 실패 허용 정도 버튼 클릭 핸들러
+  // Failure tolerance button click handler
   const handleFailureToleranceChange = (value: RealityCheckInput['failureTolerance']) => {
     onChange({
       ...data,
@@ -69,177 +61,160 @@ export function RealityCheck({ data, onChange, onNext, onBack }: RealityCheckPro
     });
   };
 
+  // Budget label formatting for compact cards
+  const budgetLabels: Record<string, { line1: string; line2: string }> = {
+    '100만원 미만': { line1: '100만원', line2: '미만' },
+    '100-500만원': { line1: '100-500', line2: '만원' },
+    '500-1000만원': { line1: '500-1000', line2: '만원' },
+    '1000만원 이상': { line1: '1000만원', line2: '이상' },
+  };
+
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-10 bg-[#FAF8F5] border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3 max-w-2xl mx-auto">
-          <button
-            onClick={onBack}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
-            aria-label="뒤로가기"
-          >
-            <ChevronLeft className="w-6 h-6 text-gray-700" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">현실 점검</h1>
-          <span className="text-sm text-gray-500 min-w-[40px] text-right">1/3</span>
-        </div>
-      </header>
+    <div className="space-y-7">
+      {/* Title section */}
+      <div className="space-y-1.5">
+        <p className="text-[13px] font-medium text-[#2563EB]">Step 1 of 3</p>
+        <h2 className="text-[28px] font-bold tracking-[-0.5px] text-[#1A1A1A]">
+          현실 점검
+        </h2>
+        <p className="text-[14px] text-[#6B7280]">
+          전환에 투입할 수 있는 현실적인 자원을 확인합니다
+        </p>
+      </div>
 
-      {/* 폼 컨텐츠 */}
-      <main className="px-4 py-6 max-w-2xl mx-auto space-y-8">
-        {/* 주당 투입 시간 */}
-        <div className="space-y-3">
-          <Label htmlFor="weekly-hours" className="text-base font-medium text-gray-900">
-            주당 투입 가능 시간
-          </Label>
-          <RadioGroup
-            id="weekly-hours"
-            value={data.weeklyHours}
-            onValueChange={(value) =>
-              onChange({
-                ...data,
-                weeklyHours: value as RealityCheckInput['weeklyHours'],
-              })
-            }
-            className="space-y-2"
-          >
-            {REALITY_CHECK_OPTIONS.weeklyHours.map((option) => (
-              <label
-                key={option}
-                htmlFor={`weekly-${option}`}
-                className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl bg-white border-2 cursor-pointer transition-all',
-                  data.weeklyHours === option
-                    ? 'border-[#2563EB] bg-blue-50/30'
-                    : 'border-gray-200 hover:border-gray-300'
-                )}
-              >
-                <RadioGroupItem
-                  value={option}
-                  id={`weekly-${option}`}
-                  className="sr-only"
-                />
-                <div
-                  className={cn(
-                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                    data.weeklyHours === option
-                      ? 'border-[#2563EB] bg-[#2563EB]'
-                      : 'border-gray-300'
-                  )}
-                >
-                  {data.weeklyHours === option && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  )}
-                </div>
-                <span className="text-base text-gray-900">{option}</span>
-              </label>
-            ))}
-          </RadioGroup>
+      {/* Q1: Weekly available hours - vertical radio */}
+      <div className="space-y-2.5">
+        <label className="text-[14px] font-semibold text-[#1A1A1A]">
+          주당 투입 가능 시간
+        </label>
+        <div className="space-y-2">
+          {REALITY_CHECK_OPTIONS.weeklyHours.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() =>
+                onChange({
+                  ...data,
+                  weeklyHours: option as RealityCheckInput['weeklyHours'],
+                })
+              }
+              className={cn(
+                'flex w-full items-center h-[44px] px-4 rounded-[10px] text-[14px] transition-all',
+                data.weeklyHours === option
+                  ? 'bg-[#EFF6FF] border-[1.5px] border-[#2563EB] text-[#2563EB] font-medium'
+                  : 'bg-[#FFFFFF] border border-[#E5E7EB] text-[#1A1A1A] hover:border-[#D1D5DB]'
+              )}
+            >
+              {option}
+            </button>
+          ))}
         </div>
+      </div>
 
-        {/* 예산 한도 */}
-        <div className="space-y-3">
-          <Label htmlFor="budget-limit" className="text-base font-medium text-gray-900">
-            예산 한도
-          </Label>
-          <RadioGroup
-            id="budget-limit"
-            value={data.budgetLimit}
-            onValueChange={(value) =>
-              onChange({
-                ...data,
-                budgetLimit: value as RealityCheckInput['budgetLimit'],
-              })
-            }
-            className="space-y-2"
-          >
-            {REALITY_CHECK_OPTIONS.budgetLimit.map((option) => (
-              <label
-                key={option}
-                htmlFor={`budget-${option}`}
-                className={cn(
-                  'flex items-center gap-3 p-4 rounded-xl bg-white border-2 cursor-pointer transition-all',
-                  data.budgetLimit === option
-                    ? 'border-[#2563EB] bg-blue-50/30'
-                    : 'border-gray-200 hover:border-gray-300'
-                )}
-              >
-                <RadioGroupItem
-                  value={option}
-                  id={`budget-${option}`}
-                  className="sr-only"
-                />
-                <div
-                  className={cn(
-                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                    data.budgetLimit === option
-                      ? 'border-[#2563EB] bg-[#2563EB]'
-                      : 'border-gray-300'
-                  )}
-                >
-                  {data.budgetLimit === option && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
-                  )}
-                </div>
-                <span className="text-base text-gray-900">{option}</span>
-              </label>
-            ))}
-          </RadioGroup>
-        </div>
-
-        {/* 실패 허용 정도 - 버튼 그룹 */}
-        <div className="space-y-3">
-          <Label className="text-base font-medium text-gray-900">
-            실패 허용 정도
-          </Label>
-          <div className="grid grid-cols-3 gap-2">
-            {REALITY_CHECK_OPTIONS.failureTolerance.map((option) => (
-              <Button
+      {/* Q2: Budget limit - 4 horizontal cards */}
+      <div className="space-y-2.5">
+        <label className="text-[14px] font-semibold text-[#1A1A1A]">
+          예산 한도
+        </label>
+        <div className="grid grid-cols-4 gap-2">
+          {REALITY_CHECK_OPTIONS.budgetLimit.map((option) => {
+            const label = budgetLabels[option];
+            return (
+              <button
                 key={option}
                 type="button"
-                variant={data.failureTolerance === option ? 'default' : 'outline'}
-                onClick={() => handleFailureToleranceChange(option)}
+                onClick={() =>
+                  onChange({
+                    ...data,
+                    budgetLimit: option as RealityCheckInput['budgetLimit'],
+                  })
+                }
                 className={cn(
-                  'h-12 text-base font-medium rounded-xl transition-all',
-                  data.failureTolerance === option
-                    ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white border-[#2563EB]'
-                    : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                  'flex flex-col items-center justify-center h-[48px] rounded-[10px] text-[11px] text-center transition-all',
+                  data.budgetLimit === option
+                    ? 'bg-[#EFF6FF] border-[1.5px] border-[#2563EB] text-[#2563EB] font-medium'
+                    : 'bg-[#FFFFFF] border border-[#E5E7EB] text-[#1A1A1A] hover:border-[#D1D5DB]'
                 )}
               >
-                {option}
-              </Button>
-            ))}
-          </div>
+                <span>{label.line1}</span>
+                <span>{label.line2}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* 에러 메시지 표시 */}
-        {errors.length > 0 && (
-          <div className="space-y-2 p-4 rounded-xl bg-red-50 border border-red-200">
-            {errors.map((error, index) => (
-              <p key={index} className="text-sm text-red-600">
-                {error}
-              </p>
-            ))}
-          </div>
+      {/* Q3: Failure tolerance - 3 horizontal buttons */}
+      <div className="space-y-2.5">
+        <label className="text-[14px] font-semibold text-[#1A1A1A]">
+          실패 허용 정도
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {REALITY_CHECK_OPTIONS.failureTolerance.map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => handleFailureToleranceChange(option)}
+              className={cn(
+                'flex items-center justify-center h-[40px] rounded-[10px] text-[13px] transition-all',
+                data.failureTolerance === option
+                  ? 'bg-[#EFF6FF] border-[1.5px] border-[#2563EB] text-[#2563EB] font-medium'
+                  : 'bg-[#FFFFFF] border border-[#E5E7EB] text-[#1A1A1A] hover:border-[#D1D5DB]'
+              )}
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Q4: Absolute constraints - optional textarea */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between">
+          <label className="text-[14px] font-semibold text-[#1A1A1A]">
+            절대적 제약 조건
+          </label>
+          <span className="text-[12px] text-[#9CA3AF]">선택사항</span>
+        </div>
+        <textarea
+          value={data.absoluteConstraints}
+          onChange={(e) =>
+            onChange({
+              ...data,
+              absoluteConstraints: e.target.value,
+            })
+          }
+          placeholder="예: 서울 거주 필수, 주말 근무 불가 등"
+          className="w-full h-[80px] rounded-[10px] border border-[#E5E7EB] bg-[#FFFFFF] px-4 py-3 text-[14px] text-[#1A1A1A] placeholder:text-[#9CA3AF] resize-none focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-colors"
+          maxLength={500}
+        />
+      </div>
+
+      {/* Error messages */}
+      {errors.length > 0 && (
+        <div className="space-y-2 rounded-[10px] bg-red-50 border border-red-200 p-3">
+          {errors.map((error, index) => (
+            <p key={index} className="text-[13px] text-red-600">
+              {error}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Next button */}
+      <button
+        onClick={handleNext}
+        disabled={!canProceed}
+        className={cn(
+          'flex w-full items-center justify-center gap-2 h-[52px] rounded-[12px] text-[16px] font-semibold transition-all',
+          canProceed
+            ? 'bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
+            : 'bg-[#E5E7EB] text-[#9CA3AF] cursor-not-allowed'
         )}
-
-        {/* 다음 단계 버튼 */}
-        <div className="pt-4">
-          <Button
-            onClick={handleNext}
-            disabled={!canProceed}
-            className={cn(
-              'w-full h-14 text-lg font-semibold rounded-xl transition-all',
-              canProceed
-                ? 'bg-[#2563EB] hover:bg-[#1d4ed8] text-white'
-                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-            )}
-          >
-            다음 단계
-          </Button>
-        </div>
-      </main>
+      >
+        다음
+        <ArrowRight className="h-5 w-5" />
+      </button>
     </div>
   );
 }
