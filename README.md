@@ -13,7 +13,7 @@
 
 | 분류 | 기술 |
 |------|------|
-| Frontend | Next.js 15 App Router, TypeScript, Tailwind CSS 4.0 |
+| Frontend | Next.js 16 App Router, TypeScript, Tailwind CSS 4 |
 | UI | shadcn/ui, Radix UI |
 | AI | Google Gemini API (gemini-2.0-flash) |
 | Deployment | Vercel |
@@ -52,6 +52,13 @@ vercel
 ```
 
 또는 GitHub 저장소를 Vercel에 연결하여 자동 배포를 설정할 수 있습니다.
+
+## 디자인
+
+UI 디자인은 `designs/` 디렉터리에서 Pencil MCP를 통해 관리됩니다.
+
+- `designs/myoi-transition.pen` - 디자인 소스 파일 (Landing, Step 1-3, Loading, Report 6개 화면)
+- `designs/screenshots/` - 디자인 스크린샷 백업
 
 ## 라이선스
 

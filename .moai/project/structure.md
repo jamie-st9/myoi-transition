@@ -98,6 +98,9 @@ project001/
 │   ├── images/
 │   │   └── hero-bg.svg
 │   └── favicon.ico
+├── designs/                    # Pencil 디자인 파일 및 스크린샷 백업
+│   ├── myoi-transition.pen    # 6개 화면 UI 디자인 (Landing, Step 1-3, Loading, Report)
+│   └── screenshots/           # 디자인 스크린샷 백업
 ├── .moai/                      # MoAI 설정
 │   ├── config/
 │   ├── project/

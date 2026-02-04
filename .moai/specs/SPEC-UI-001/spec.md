@@ -31,11 +31,11 @@ priority: high
 ## 환경 (Environment)
 
 ### 기술 스택
-- **Frontend Framework**: Next.js 15 App Router with TypeScript
-- **Styling**: Tailwind CSS 4.0 + shadcn/ui components
-- **AI Integration**: Claude API via @anthropic-ai/sdk (Anthropic)
+- **Frontend Framework**: Next.js 16 App Router with TypeScript
+- **Styling**: Tailwind CSS 4 + shadcn/ui components
+- **AI Integration**: Google Gemini API via @google/generative-ai
 - **Deployment**: Vercel Serverless Functions
-- **Package Manager**: pnpm
+- **Package Manager**: npm
 - **Design**: Mobile-first responsive design
 
 ### 제약 사항
